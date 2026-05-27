@@ -12,7 +12,7 @@ export default function Landing({ onGetStarted }) {
       <nav className="landing-nav glass-effect">
         <div className="landing-nav-content">
           <div className="landing-logo">
-            <h2>Indian Warehousing Survey 2026</h2>
+            <h2>Warehouse Survey 2026</h2>
           </div>
           <button className="landing-login-btn" onClick={onGetStarted}>
             Login / Sign Up
@@ -21,6 +21,11 @@ export default function Landing({ onGetStarted }) {
       </nav>
 
       <section className="landing-hero">
+        <video autoPlay muted loop className="landing-hero-video">
+          <source src="https://res.cloudinary.com/dz01d7fue/video/upload/v1779867571/warehouses_jazflb.mp4" type="video/mp4" />
+        </video>
+        <button className="login-cta top-right" onClick={onGetStarted}>Login / Sign Up</button>
+        <div className="landing-hero-overlay"></div>
         <div className="landing-hero-content">
           <h1>Shape the Future of <span className="gradient-text">Indian Warehousing</span></h1>
           <p className="landing-subtitle">
@@ -155,16 +160,6 @@ export default function Landing({ onGetStarted }) {
               <h4>Future Outlook</h4>
             </div>
           </div>
-        </div>
-      </section>
-
-      <section className="landing-cta-section glass-effect">
-        <div className="landing-container">
-          <h2>Ready to Contribute?</h2>
-          <p>Join stakeholders across the warehousing ecosystem in shaping the future of Indian logistics.</p>
-          <button className="landing-cta-large" onClick={onGetStarted}>
-            Start Your Survey Now
-          </button>
         </div>
       </section>
 
