@@ -12,7 +12,7 @@ export default function Landing({ onGetStarted }) {
       <nav className="landing-nav glass-effect">
         <div className="landing-nav-content">
           <div className="landing-logo">
-            <h2>Warehouse Survey 2026</h2>
+            <h2>Indian Warehousing Survey 2026</h2>
           </div>
           <button className="landing-login-btn" onClick={onGetStarted}>
             Login / Sign Up
