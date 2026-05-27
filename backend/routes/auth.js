@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import Survey from '../models/Survey.js';
 import { localDb } from '../localDb.js';
+import { getJwtSecret } from '../config/jwt.js';
 
 const router = express.Router();
 
@@ -55,7 +56,7 @@ router.post('/login', async (req, res) => {
         return res.status(401).json({ error: 'Invalid credentials (offline mode)' });
       }
 
-      const token = jwt.sign({ userId: user._id, username }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
+      const token = jwt.sign({ userId: user._id, username }, getJwtSecret(), { expiresIn: '7d' });
       // Retrieve offline draft (if any)
       let draft = null;
       try {
@@ -84,7 +85,7 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({ userId: user._id, username }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user._id, username }, getJwtSecret(), { expiresIn: '7d' });
     // Retrieve user's draft (if any)
     let draft = null;
     try {
