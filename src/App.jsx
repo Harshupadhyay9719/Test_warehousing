@@ -79,14 +79,14 @@ export default function App() {
       setIsLoading(false);
       return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username)) {
+    if (username !== 'admin@gmail.com' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username)) {
       setLoginError('Please enter a valid email address.');
       setIsLoading(false);
       return;
     }
 
     try {
-      if (username === 'admin') {
+      if (username === 'admin@gmail.com') {
         if (password !== 'survey2026') {
           throw new Error('Invalid admin password.');
         }

@@ -90,7 +90,9 @@
 
 .gate-card label,
 .respondent-form label {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
   gap: 0.4rem;
   margin-bottom: 1rem;
   color: #5c5c72;
@@ -106,6 +108,7 @@
 .gate-card input,
 .respondent-form input {
   width: 100%;
+  flex-basis: 100%;
   padding: 0.85rem 0.95rem;
   color: #1a1a2e;
   border: 1px solid #d7dce5;
