@@ -8,13 +8,13 @@ async function seed() {
   await mongoose.connect(process.env.MONGODB_URI);
   console.log('✓ Connected to MongoDB');
 
-  const existing = await User.findOne({ username: 'admin' });
+  const existing = await User.findOne({ username: 'admin@gmail.com' });
   if (existing) {
     console.log('✓ Admin user already exists — nothing to do.');
   } else {
-    const user = new User({ username: 'admin', password: 'survey2026' });
+    const user = new User({ username: 'admin@gmail.com', password: 'survey2026' });
     await user.save();
-    console.log('✓ Admin user created (username: admin, password: survey2026)');
+    console.log('✓ Admin user created (username: admin@gmail.com, password: survey2026)');
   }
 
   const testUserExists = await User.findOne({ username: 'testuser' });

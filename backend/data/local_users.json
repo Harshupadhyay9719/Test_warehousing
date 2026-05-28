@@ -4,5 +4,11 @@
     "username": "admin",
     "password": "$2a$10$J/xw91deJYCdz.cSwuH1YeSLALONo0/MfrE9/At2Awk.Jj6fYKXBG",
     "createdAt": "2026-05-25T10:57:44.190Z"
+  },
+  {
+    "_id": "local-admin-id",
+    "username": "admin@gmail.com",
+    "password": "$2a$10$PDY8diEdXuzCOywrxRbFZ.WvL8ErMUZZcP7dqNKnbV6k8RTNavAT2",
+    "createdAt": "2026-05-28T10:43:56.702Z"
   }
 ]

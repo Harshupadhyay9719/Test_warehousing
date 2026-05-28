@@ -39,17 +39,17 @@ function writeJSON(file, data) {
 // Seed local admin user if not exists
 async function seedLocalAdmin() {
   const users = readJSON(USERS_FILE);
-  const adminExists = users.some(u => u.username === 'admin');
+  const adminExists = users.some(u => u.username === 'admin@gmail.com');
   if (!adminExists) {
     const hashedPassword = await bcrypt.hash('survey2026', 10);
     users.push({
       _id: 'local-admin-id',
-      username: 'admin',
+      username: 'admin@gmail.com',
       password: hashedPassword,
       createdAt: new Date().toISOString()
     });
     writeJSON(USERS_FILE, users);
-    console.log('✓ [Offline Mode] Seeded local admin user (username: admin, password: survey2026)');
+    console.log('✓ [Offline Mode] Seeded local admin user (username: admin@gmail.com, password: survey2026)');
   }
 }
 
