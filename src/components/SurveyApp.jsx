@@ -349,7 +349,7 @@ function LikertQuestion({ q, value, onChange, disabled }) {
   );
 }
 
-function QuestionBlock({ qnum, answers, confirmed, autofilled, skipped, onAnswer, onConfirm, onSkip }) {
+function QuestionBlock({ qnum, answers, confirmed, autofilled, skipped, onAnswer, onConfirm, onSkip, onBlurOpen }) {
   const q = QUESTIONS[qnum];
   if (!q) return null;
   const isSkipped = !!skipped[qnum];
@@ -390,19 +390,13 @@ function QuestionBlock({ qnum, answers, confirmed, autofilled, skipped, onAnswer
             placeholder="Share your thoughts here..."
             rows={4}
             onChange={(e) => onAnswer(e.target.value)}
+            onBlur={onBlurOpen}
           />
           <div className="char-count">{(value || '').length} characters</div>
         </>
       )}
 
       <div className="q-actions">
-        <button
-          type="button"
-          className={`confirm-btn${isConfirmed ? ' confirmed' : ''}`}
-          onClick={onConfirm}
-        >
-          {isConfirmed ? '\u2713 Confirmed' : 'Confirm answer'}
-        </button>
         <button
           type="button"
           className={`skip-btn${isSkipped ? ' skipped-active' : ''}`}
@@ -741,6 +735,26 @@ export default function App({ initialScreen = 'welcome', respondent, onFinish })
   const [sectionPopup, setSectionPopup] = useState(null);
   const [requiredPopup, setRequiredPopup] = useState(null);
   const saveTimer = useRef(null);
+  const popupTimer = useRef(null);
+  const confirmedRef = useRef(confirmed);
+
+  useEffect(() => {
+    confirmedRef.current = confirmed;
+  }, [confirmed]);
+
+  useEffect(() => {
+    return () => {
+      if (popupTimer.current) {
+        clearTimeout(popupTimer.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (popupTimer.current) {
+      clearTimeout(popupTimer.current);
+    }
+  }, [sectionIdx]);
   const activeSections = getFilteredSections(respondent?.roleCode);
   const activeQuestionNums = activeSections.flatMap(section => section.qs);
   const activeQuestionTotal = activeQuestionNums.length;
@@ -813,16 +827,30 @@ export default function App({ initialScreen = 'welcome', respondent, onFinish })
     if (!section) return;
     const lastQ = section.qs[section.qs.length - 1];
     if (qnum !== lastQ) return;
-    const allConfirmed = section.qs.every(q => confirmed[q] || q === qnum);
+
+    if (popupTimer.current) {
+      clearTimeout(popupTimer.current);
+    }
+
+    const allConfirmed = section.qs.every(q => confirmedRef.current[q] || q === qnum);
     if (!allConfirmed) return;
     const p = getSectionProgress(section);
-    setSectionPopup({
-      num: section.num,
-      title: section.title,
-      total: p.total,
-      isLast: sectionIdx === activeSectionTotal - 1,
-      nextTitle: sectionIdx < activeSectionTotal - 1 ? activeSections[sectionIdx + 1].title : null,
-    });
+
+    popupTimer.current = setTimeout(() => {
+      const currentSection = activeSections[sectionIdx];
+      if (!currentSection) return;
+      const allStillConfirmed = currentSection.qs.every(q => confirmedRef.current[q]);
+      if (!allStillConfirmed) return;
+
+      const currentProgress = getSectionProgress(currentSection);
+      setSectionPopup({
+        num: currentSection.num,
+        title: currentSection.title,
+        total: currentProgress.total,
+        isLast: sectionIdx === activeSectionTotal - 1,
+        nextTitle: sectionIdx < activeSectionTotal - 1 ? activeSections[sectionIdx + 1].title : null,
+      });
+    }, 1500);
   };
 
   const confirmQuestion = (qnum) => {
@@ -876,25 +904,65 @@ export default function App({ initialScreen = 'welcome', respondent, onFinish })
   }, [autofilled]);
 
   const setAnswer = (qnum, val) => {
-    setSkipped(s => { const n = { ...s }; delete n[qnum]; return n; });
-    setConfirmed(c => {
-      if (!c[qnum]) return c;
-      const n = { ...c };
-      delete n[qnum];
-      return n;
-    });
-    setConfirmedSnapshot(s => {
+    // 1. Clear skipped status for this question
+    setSkipped(s => {
       if (!s[qnum]) return s;
       const n = { ...s };
       delete n[qnum];
       return n;
     });
+
+    // 2. Update answer and apply autofills
     setAnswers(prev => {
       let next = { ...prev, [qnum]: val };
       next = checkAutofills(qnum, next);
       return next;
     });
+
+    const localNextAnswers = checkAutofills(qnum, { ...answers, [qnum]: val });
+    const isFullyAnswered = isAnswered(qnum, localNextAnswers, skipped);
+
+    // 3. Auto-confirm the answer ONLY if it is fully answered
+    const wasConfirmed = !!confirmed[qnum];
+    setConfirmed(c => {
+      if (isFullyAnswered) {
+        return { ...c, [qnum]: true };
+      } else {
+        if (!c[qnum]) return c;
+        const nextConfirmed = { ...c };
+        delete nextConfirmed[qnum];
+        return nextConfirmed;
+      }
+    });
+
+    // 4. Update confirmed snapshot with display representation if fully answered, otherwise remove it
+    setConfirmedSnapshot(s => {
+      if (isFullyAnswered) {
+        const displayVal = getAnswerDisplay(qnum, localNextAnswers, skipped);
+        return { ...s, [qnum]: displayVal };
+      } else {
+        if (!s[qnum]) return s;
+        const nextSnapshot = { ...s };
+        delete nextSnapshot[qnum];
+        return nextSnapshot;
+      }
+    });
+
     scheduleSave();
+
+    // 5. If the question is now fully answered and wasn't confirmed before, check if section is complete
+    // Trigger popup for non-open questions with debounce. Open questions are handled on blur.
+    const q = QUESTIONS[qnum];
+    if (isFullyAnswered && q) {
+      if (q.type !== 'open') {
+        showSectionCompletePopup(qnum);
+      }
+    } else {
+      // If it is no longer fully answered, clear any pending popup timer
+      if (popupTimer.current) {
+        clearTimeout(popupTimer.current);
+      }
+    }
   };
 
 
@@ -1106,6 +1174,7 @@ export default function App({ initialScreen = 'welcome', respondent, onFinish })
               onAnswer={(val) => setAnswer(qnum, val)}
               onConfirm={() => confirmQuestion(qnum)}
               onSkip={() => skipQuestion(qnum)}
+              onBlurOpen={() => showSectionCompletePopup(qnum)}
             />
           ))}
         </main>

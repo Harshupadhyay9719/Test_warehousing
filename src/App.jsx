@@ -13,6 +13,8 @@ import Survey from './pages/Survey.jsx';
 import AdminPage from './pages/AdminPage.jsx';
 import { apiClient } from './api/client.js';
 import { STORAGE_KEY } from './data/questions.js';
+import ReCAPTCHA from 'react-google-recaptcha';
+import './styles/disclaimer.css';
 
 const roles = [
   { code: 'WH/3PL', label: 'Warehouse Operators / 3PL Providers' },
@@ -47,6 +49,7 @@ export default function App() {
   const [loginError, setLoginError] = useState('');
   const [route, setRoute] = useState(getCurrentRoute);
   const [isLoading, setIsLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState(null);
 
   const navigate = (nextRoute) => {
     window.history.pushState({}, '', nextRoute);
@@ -69,6 +72,18 @@ export default function App() {
     const formData = new FormData(event.currentTarget);
     const username = formData.get('username')?.trim();
     const password = formData.get('password')?.trim();
+
+    // Validate captcha token before proceeding
+    if (!captchaToken) {
+      setLoginError('Please complete the captcha verification.');
+      setIsLoading(false);
+      return;
+    }
+    if (username !== 'admin' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username)) {
+      setLoginError('Please enter a valid email address.');
+      setIsLoading(false);
+      return;
+    }
 
     try {
       if (username === 'admin') {
@@ -178,17 +193,23 @@ export default function App() {
           <p className="gate-eyebrow">India Warehousing Ecosystem Survey 2026</p>
           <h1>Enter your credentials</h1>
           <label>
-            Username
-            <input name="username" type="text" placeholder="Username" required disabled={isLoading} />
+            Email
+            <input name="username" type="email" placeholder="you@example.com" required disabled={isLoading} />
           </label>
-          <label>
-            Password
-            <input name="password" type="password" placeholder="Password" required disabled={isLoading} />
-          </label>
+            <label>
+              Password
+              <input name="password" type="password" placeholder="Password" required disabled={isLoading} />
+            </label>
+            {/* ReCAPTCHA */}
+            <ReCAPTCHA
+              sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
+              onChange={(value) => setCaptchaToken(value)}
+            />
           {loginError && <p className="gate-error">{loginError}</p>}
           <button className="hero-action" type="submit" disabled={isLoading}>
             {isLoading ? 'Logging in...' : 'Continue'}
           </button>
+          <p className="survey-disclaimer">No personal identity or individual information will be disclosed at any stage of the study. We assure you that all information provided in this survey will remain anonymous and confidential.</p>
         </form>
       </main>
     );
@@ -205,15 +226,15 @@ export default function App() {
                 <p className="gate-eyebrow">Before the survey</p>
                 <h1>Your details</h1>
                 <label>
-                  Name
+                  Name (optional)
                   <input name="name" type="text" placeholder="Your full name" defaultValue={respondentDetails?.name || ''} />
                 </label>
                 <label>
-                  Email
+                  Email (optional)
                   <input name="email" type="email" placeholder="you@example.com" defaultValue={respondentDetails?.email || ''} />
                 </label>
                 <label>
-                  Organization / Company name
+                  Organization / Company name <span style={{color: 'red'}}>*</span>
                   <input name="organization" type="text" placeholder="Company or organization" required defaultValue={respondentDetails?.organization || ''} />
                 </label>
                 <button className="hero-action" type="submit">Continue to role</button>

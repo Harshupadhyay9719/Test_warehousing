@@ -3,22 +3,9 @@ import '../styles/landing.css';
 export default function Landing({ onGetStarted }) {
   return (
     <main className="landing-page">
-      {/* Animated background elements */}
-      <div className="landing-bg-gradient"></div>
-      <div className="landing-blob landing-blob-1"></div>
-      <div className="landing-blob landing-blob-2"></div>
-      <div className="landing-blob landing-blob-3"></div>
+      {/* Simplified background without extra decorative blobs */}
 
-      <nav className="landing-nav glass-effect">
-        <div className="landing-nav-content">
-          <div className="landing-logo">
-            <h2>Warehouse Survey 2026</h2>
-          </div>
-          <button className="landing-login-btn" onClick={onGetStarted}>
-            Login / Sign Up
-          </button>
-        </div>
-      </nav>
+
 
       <section className="landing-hero">
         <video autoPlay muted loop className="landing-hero-video">
