@@ -5,9 +5,9 @@ import Navbar from '../components/Navbar.jsx';
 import Footer from '../components/Footer.jsx';
 import '../data/questions.js';
 import '../styles/admin.css';
-import DashboardPage from '../pages/DashboardPage.jsx';
+import SurveyDashboardPage from '../pages/SurveyDashboardPage.jsx';
 
-export default function AdminPage() {
+export default function SurveyAdminPage() {
   const [view, setView] = useState(window.location.hash.includes('dashboard') ? 'dashboard' : 'summary');
   const [surveys, setSurveys] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -73,7 +73,7 @@ export default function AdminPage() {
     return (
       <>
         <Navbar />
-        <DashboardPage />
+        <SurveyDashboardPage />
         <Footer />
       </>
     );

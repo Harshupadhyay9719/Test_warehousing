@@ -37,7 +37,7 @@ const parseMulti = (str) => {
   return str.split(';').map(s => s.trim()).filter(Boolean);
 };
 
-const DashboardPage = () => {
+const SurveyDashboardPage = () => {
   const [responses, setResponses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -180,4 +180,4 @@ const DashboardPage = () => {
   );
 };
 
-export default DashboardPage;
+export default SurveyDashboardPage;

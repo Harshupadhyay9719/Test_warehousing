@@ -1,7 +1,7 @@
 import SurveyCard from '../components/SurveyCard.jsx';
 import ProgressBar from '../components/ProgressBar.jsx';
 
-export default function Dashboard() {
+export default function SurveyDashboard() {
   return (
     <section className="home-summary" id="dashboard">
       <SurveyCard title="Questions" value="75" detail="Across 15 focused sections" />

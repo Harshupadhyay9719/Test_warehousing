@@ -1,6 +1,6 @@
 import '../styles/landing.css';
 
-export default function Landing({ onGetStarted }) {
+export default function SurveyLanding({ onGetStarted }) {
   return (
     <main className="landing-page">
       {/* Simplified background without extra decorative blobs */}

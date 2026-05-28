@@ -7,10 +7,10 @@ import './styles/admin.css';
 
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
-import Landing from './pages/Landing.jsx';
-import Home from './pages/Home.jsx';
-import Survey from './pages/Survey.jsx';
-import AdminPage from './pages/AdminPage.jsx';
+import SurveyLanding from './pages/SurveyLanding.jsx';
+import SurveyHome from './pages/SurveyHome.jsx';
+import SurveyCredential from './pages/SurveyCredential.jsx';
+import SurveyAdminPage from './pages/SurveyAdminPage.jsx';
 import { apiClient } from './api/client.js';
 import { STORAGE_KEY } from './data/questions.js';
 import ReCAPTCHA from 'react-google-recaptcha';
@@ -28,12 +28,12 @@ const roles = [
 
 const routes = {
   landing: '/',
-  credentials: '/credentials',
-  main: '/main',
-  admin: '/admin',
-  roles: '/roles',
-  questions: '/questions',
-  finished: '/finished',
+  credentials: '/survey-credentials',
+  main: '/survey-home',
+  admin: '/survey-admin',
+  roles: '/survey-roles',
+  questions: '/survey-questions',
+  finished: '/survey-finished',
 };
 
 function getCurrentRoute() {
@@ -47,7 +47,7 @@ export default function App() {
   const [showRoleSelection, setShowRoleSelection] = useState(false);
   const [role, setRole] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [route, setRoute] = useState(getCurrentRoute);
+  const [route, setRoute] = useState(getCurrentRoute());
   const [isLoading, setIsLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState(null);
 
@@ -57,11 +57,18 @@ export default function App() {
   };
 
   useEffect(() => {
+    // Always ensure the URL matches a valid route, default to landing
     if (!Object.values(routes).includes(window.location.pathname)) {
       window.history.replaceState({}, '', routes.landing);
+      setRoute(routes.landing);
+    } else {
+      setRoute(window.location.pathname);
     }
 
-    const handlePopState = () => setRoute(getCurrentRoute());
+    const handlePopState = () => {
+      const currentPath = getCurrentRoute();
+      setRoute(currentPath);
+    };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
@@ -183,7 +190,7 @@ export default function App() {
   };
 
   if (route === routes.landing) {
-    return <Landing onGetStarted={() => navigate(routes.credentials)} />;
+    return <SurveyLanding onGetStarted={() => navigate(routes.credentials)} />;
   }
 
   if (!credentials || route === routes.credentials) {
@@ -290,7 +297,7 @@ export default function App() {
     const screen = route === routes.finished ? 'complete' : (hasDraft ? 'welcome' : 'survey');
 
     return (
-      <Survey
+      <SurveyCredential
         initialScreen={screen}
         onFinish={() => navigate(routes.finished)}
         respondent={{ ...credentials, ...respondentDetails, role: role.label, roleCode: role.code }}
@@ -302,7 +309,7 @@ export default function App() {
     return (
       <>
         <Navbar />
-        <Home onStartSurvey={() => navigate(routes.roles)} />
+        <SurveyHome onStartSurvey={() => navigate(routes.roles)} />
         <Footer />
       </>
     );
@@ -312,7 +319,7 @@ export default function App() {
     return (
       <>
         <Navbar />
-        <AdminPage />
+        <SurveyAdminPage />
         <Footer />
       </>
     );
@@ -321,7 +328,7 @@ export default function App() {
   return (
     <>
       <Navbar />
-      <Home onStartSurvey={() => navigate(routes.roles)} />
+      <SurveyHome onStartSurvey={() => navigate(routes.roles)} />
       <Footer />
     </>
   );

@@ -5,7 +5,7 @@ import ProgressBar from '../components/ProgressBar.jsx';
 import { STORAGE_KEY, SECTIONS } from '../data/questions.js';
 import { isAnswered } from '../utils/surveyUtils.js';
 
-export default function Home({ onStartSurvey }) {
+export default function SurveyHome({ onStartSurvey }) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
