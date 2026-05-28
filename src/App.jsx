@@ -79,7 +79,7 @@ export default function App() {
       setIsLoading(false);
       return;
     }
-    if (username !== 'admin' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username)) {
       setLoginError('Please enter a valid email address.');
       setIsLoading(false);
       return;
