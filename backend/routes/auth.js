@@ -4,8 +4,18 @@ import User from '../models/User.js';
 import Survey from '../models/Survey.js';
 import { localDb } from '../localDb.js';
 import { getJwtSecret } from '../config/jwt.js';
+import { verifyToken } from '../middleware/auth.js';
 
 const router = express.Router();
+
+// ── GET /api/auth/me ──────────────────────────────────────────────────────────
+// Validates the bearer token and returns the logged-in user's info.
+// The frontend calls this once on page load to silently restore the session.
+router.get('/me', verifyToken, (req, res) => {
+  const isAdmin = req.user.username === 'admin@gmail.com';
+  res.json({ username: req.user.username, isAdmin });
+});
+
 
 router.post('/register', async (req, res) => {
   try {
