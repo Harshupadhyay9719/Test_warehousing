@@ -56,7 +56,7 @@ export default function App() {
   const [showRoleSelection, setShowRoleSelection] = useState(false);
   const [role, setRole] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [route, setRoute] = useState(getCurrentRoute());
+  const [route, setRoute] = useState(routes.landing);
   const [isLoading, setIsLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState(null);
   // true while we're silently checking the stored token on page load
