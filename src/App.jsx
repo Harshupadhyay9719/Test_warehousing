@@ -139,6 +139,7 @@ export default function App() {
         }
 
         localStorage.setItem('authToken', token);
+        localStorage.removeItem(STORAGE_KEY);
         setLoginError('');
         setCredentials({ username });
 
