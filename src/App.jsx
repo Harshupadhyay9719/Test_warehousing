@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 import './styles/navbar.css';
 import './styles/hero.css';
@@ -41,6 +41,15 @@ function getCurrentRoute() {
   return Object.values(routes).includes(path) ? path : routes.landing;
 }
 
+function getRoleFromRespondent(respondent) {
+  if (!respondent?.role && !respondent?.roleCode) return '';
+
+  return roles.find((item) => item.label === respondent.role || item.code === respondent.roleCode) || {
+    label: respondent.role || '',
+    code: respondent.roleCode || '',
+  };
+}
+
 export default function App() {
   const [credentials, setCredentials] = useState(null);
   const [respondentDetails, setRespondentDetails] = useState(null);
@@ -50,37 +59,103 @@ export default function App() {
   const [route, setRoute] = useState(routes.landing);
   const [isLoading, setIsLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState(null);
+  // true while we're silently checking the stored token on page load
+  const [sessionChecking, setSessionChecking] = useState(true);
 
   const navigate = (nextRoute) => {
     window.history.pushState({}, '', nextRoute);
     setRoute(nextRoute);
   };
 
+  /** Clear all auth state and go back to the login screen. */
+  const handleLogout = useCallback(() => {
+    apiClient.logout();
+    setCredentials(null);
+    setRespondentDetails(null);
+    setRole('');
+    setShowRoleSelection(false);
+    setLoginError('');
+    navigate(routes.credentials);
+  }, []);
 
-  useEffect(() => {
-  if (!credentials) {
-    window.history.replaceState({}, '', routes.landing);
-    setRoute(routes.landing);
-  } else {
-    const currentPath = window.location.pathname;
-    setRoute(Object.values(routes).includes(currentPath) ? currentPath : routes.landing);
-  }
-}, [credentials]);
+  const restoreDraftState = useCallback(async () => {
+    const draft = await apiClient.getDraft();
+    if (!draft || Object.keys(draft).length === 0) return;
 
-  useEffect(() => {
-  const handlePopState = () => {
-    if (!credentials) {
-      window.history.replaceState({}, '', routes.landing);
-      setRoute(routes.landing);
-    } else {
-      const currentPath = window.location.pathname;
-      setRoute(Object.values(routes).includes(currentPath) ? currentPath : routes.landing);
+    if (draft.respondent) {
+      setRespondentDetails({
+        name: draft.respondent.name || '',
+        email: draft.respondent.email || '',
+        organization: draft.respondent.organization || '',
+      });
+
+      const restoredRole = getRoleFromRespondent(draft.respondent);
+      if (restoredRole) setRole(restoredRole);
     }
-  };
-  window.addEventListener('popstate', handlePopState);
-  return () => window.removeEventListener('popstate', handlePopState);
-}, [credentials]);
 
+    setShowRoleSelection(true);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      answers: draft.answers || {},
+      confirmed: draft.confirmed || {},
+      confirmedSnapshot: draft.confirmedSnapshot || {},
+      autofilled: draft.autofilled || {},
+      skipped: draft.skipped || {},
+      currentSectionIdx: draft.progress?.currentSectionIdx || 0,
+      savedAt: draft.updatedAt ? new Date(draft.updatedAt).getTime() : Date.now()
+    }));
+  }, []);
+
+  useEffect(() => {
+    // ── 1. Silently restore session from stored token ─────────────────────────
+    apiClient.verifySession().then(async (user) => {
+      if (user) {
+        // Token is still valid — skip the login screen
+        setCredentials({ username: user.username });
+        if (!user.isAdmin) {
+          try {
+            await restoreDraftState();
+          } catch (draftError) {
+            console.error('Failed to restore draft from session:', draftError);
+          }
+        }
+        const currentPath = window.location.pathname;
+        const validPaths = Object.values(routes);
+        // If the stored path makes sense, keep it; otherwise go to /survey-home
+        if (validPaths.includes(currentPath) && currentPath !== routes.credentials) {
+          setRoute(currentPath);
+        } else {
+          const dest = user.isAdmin ? routes.admin : routes.main;
+          window.history.replaceState({}, '', dest);
+          setRoute(dest);
+        }
+      } else {
+        // No valid token — make sure we land on a public page
+        if (!Object.values(routes).includes(window.location.pathname)) {
+          window.history.replaceState({}, '', routes.landing);
+          setRoute(routes.landing);
+        } else {
+          setRoute(window.location.pathname);
+        }
+      }
+      setSessionChecking(false);
+    });
+
+    // ── 2. Handle token expiry fired by authenticatedFetch ───────────────────
+    const onAuthExpired = () => handleLogout();
+    window.addEventListener('auth:expired', onAuthExpired);
+
+    // ── 3. Browser back/forward ───────────────────────────────────────────────
+    const handlePopState = () => setRoute(getCurrentRoute());
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('auth:expired', onAuthExpired);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [handleLogout, restoreDraftState]);
+
+  // Show nothing while we're verifying the token (avoids flash of login screen)
+  if (sessionChecking) return null;
 
   const handleCredentialsSubmit = async (event) => {
     event.preventDefault();
@@ -126,44 +201,12 @@ export default function App() {
       setLoginError('');
       setCredentials({ username });
 
-      if (loginData.isAdmin) {
-        navigate(routes.admin);
-        return;
-      }
-
-      let draft = loginData.draft;
-      try {
-        draft = await apiClient.getDraft();
-      } catch (draftError) {
-        console.error('Failed to load existing draft:', draftError);
-      }
-
-      if (draft && Object.keys(draft).length > 0) {
-        if (draft.respondent) {
-          setRespondentDetails({
-            name: draft.respondent.name || '',
-            email: draft.respondent.email || '',
-            organization: draft.respondent.organization || '',
-          });
-          if (draft.respondent.role) {
-            const matchingRole = roles.find(r => r.label === draft.respondent.role || r.code === draft.respondent.roleCode);
-            setRole(matchingRole || {
-              label: draft.respondent.role,
-              code: draft.respondent.roleCode || ''
-            });
-          }
+        // Fetch existing draft from the database to restore state
+        try {
+          await restoreDraftState();
+        } catch (draftError) {
+          console.error('Failed to load existing draft:', draftError);
         }
-        setShowRoleSelection(true);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          answers: draft.answers || {},
-          confirmed: draft.confirmed || {},
-          confirmedSnapshot: draft.confirmedSnapshot || {},
-          autofilled: draft.autofilled || {},
-          skipped: draft.skipped || {},
-          currentSectionIdx: draft.progress?.currentSectionIdx || 0,
-          savedAt: draft.updatedAt ? new Date(draft.updatedAt).getTime() : Date.now()
-        }));
-      }
 
       navigate(routes.main);
     } catch (error) {
@@ -221,7 +264,7 @@ export default function App() {
   if (route === routes.roles) {
     return (
       <>
-        <Navbar />
+      <Navbar onLogout={handleLogout} />
         <main className="role-screen">
           <section className="role-card">
             {!showRoleSelection ? (
@@ -304,7 +347,7 @@ export default function App() {
   if (route === routes.main) {
     return (
       <>
-        <Navbar />
+        <Navbar onLogout={handleLogout} />
         <SurveyHome onStartSurvey={() => navigate(routes.roles)} />
         <Footer />
       </>
@@ -314,7 +357,7 @@ export default function App() {
   if (route === routes.admin) {
     return (
       <>
-        <Navbar />
+        <Navbar onLogout={handleLogout} />
         <SurveyAdminPage />
         <Footer />
       </>
@@ -323,7 +366,7 @@ export default function App() {
 
   return (
     <>
-      <Navbar />
+      <Navbar onLogout={handleLogout} />
       <SurveyHome onStartSurvey={() => navigate(routes.roles)} />
       <Footer />
     </>
