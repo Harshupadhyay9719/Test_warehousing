@@ -7,11 +7,24 @@ import { getJwtSecret } from '../config/jwt.js';
 
 const router = express.Router();
 
+function getAdminUsername() {
+  return process.env.ADMIN_USERNAME?.trim();
+}
+
+function isAdminUsername(username) {
+  const adminUsername = getAdminUsername();
+  return Boolean(adminUsername && username === adminUsername);
+}
+
 router.post('/register', async (req, res) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password required' });
+    }
+
+    if (isAdminUsername(username)) {
+      return res.status(403).json({ error: 'Admin account cannot be registered here' });
     }
 
     const isConnected = req.app.locals.mongoConnected();
@@ -72,7 +85,7 @@ router.post('/login', async (req, res) => {
       } catch (e) {
         console.error('Error fetching offline surveys:', e);
       }
-      return res.json({ token, username, draft, surveys });
+      return res.json({ token, username, isAdmin: isAdminUsername(username), draft, surveys });
     }
 
     const user = await User.findOne({ username });
@@ -101,7 +114,7 @@ router.post('/login', async (req, res) => {
     } catch (e) {
       console.error('Error fetching surveys:', e);
     }
-    return res.json({ token, username, draft, surveys });
+    return res.json({ token, username, isAdmin: isAdminUsername(username), draft, surveys });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: error.message || 'Login failed' });

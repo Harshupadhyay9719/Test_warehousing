@@ -13,7 +13,6 @@ if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-// Initial reading helpers
 function readJSON(file, defaultData = []) {
   try {
     if (!fs.existsSync(file)) {
@@ -36,24 +35,30 @@ function writeJSON(file, data) {
   }
 }
 
-// Seed local admin user if not exists
 async function seedLocalAdmin() {
+  const adminUsername = process.env.ADMIN_USERNAME?.trim();
+  const adminPassword = process.env.ADMIN_PASSWORD?.trim();
+
+  if (!adminUsername || !adminPassword) {
+    console.warn('[Offline Mode] Admin user was not seeded because ADMIN_USERNAME and ADMIN_PASSWORD are not configured.');
+    return;
+  }
+
   const users = readJSON(USERS_FILE);
-  const adminExists = users.some(u => u.username === 'admin@gmail.com');
+  const adminExists = users.some(u => u.username === adminUsername);
   if (!adminExists) {
-    const hashedPassword = await bcrypt.hash('survey2026', 10);
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
     users.push({
       _id: 'local-admin-id',
-      username: 'admin@gmail.com',
+      username: adminUsername,
       password: hashedPassword,
       createdAt: new Date().toISOString()
     });
     writeJSON(USERS_FILE, users);
-    console.log('✓ [Offline Mode] Seeded local admin user (username: admin@gmail.com, password: survey2026)');
+    console.log(`[Offline Mode] Seeded local admin user (username: ${adminUsername})`);
   }
 }
 
-// Auto-seed admin on load
 seedLocalAdmin().catch(err => console.error('Error seeding local admin:', err));
 
 export const localDb = {
@@ -89,11 +94,9 @@ export const localDb = {
   async saveSurveyDraft(username, surveyData) {
     const surveys = readJSON(SURVEYS_FILE);
     let surveyIndex = surveys.findIndex(s => s.respondent?.username === username && s.status === 'draft');
-    
     const now = new Date().toISOString();
-    
+
     if (surveyIndex !== -1) {
-      // Update existing draft
       surveys[surveyIndex] = {
         ...surveys[surveyIndex],
         respondent: { ...surveyData.respondent, username },
@@ -105,7 +108,6 @@ export const localDb = {
         updatedAt: now
       };
     } else {
-      // Create new draft
       const newSurvey = {
         _id: 'survey_' + Math.random().toString(36).substr(2, 9),
         respondent: { ...surveyData.respondent, username },
@@ -121,7 +123,7 @@ export const localDb = {
       surveys.push(newSurvey);
       surveyIndex = surveys.length - 1;
     }
-    
+
     writeJSON(SURVEYS_FILE, surveys);
     return surveys[surveyIndex];
   },
@@ -138,14 +140,14 @@ export const localDb = {
     if (surveyIndex === -1) {
       throw new Error('Survey draft not found');
     }
-    
+
     surveys[surveyIndex] = {
       ...surveys[surveyIndex],
       status: 'submitted',
       submittedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    
+
     writeJSON(SURVEYS_FILE, surveys);
     return surveys[surveyIndex];
   },
