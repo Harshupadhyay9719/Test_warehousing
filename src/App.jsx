@@ -47,7 +47,7 @@ export default function App() {
   const [showRoleSelection, setShowRoleSelection] = useState(false);
   const [role, setRole] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [route, setRoute] = useState(getCurrentRoute());
+  const [route, setRoute] = useState(routes.landing);
   const [isLoading, setIsLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState(null);
 
@@ -56,22 +56,31 @@ export default function App() {
     setRoute(nextRoute);
   };
 
+
   useEffect(() => {
-    // Always ensure the URL matches a valid route, default to landing
-    if (!Object.values(routes).includes(window.location.pathname)) {
+  if (!credentials) {
+    window.history.replaceState({}, '', routes.landing);
+    setRoute(routes.landing);
+  } else {
+    const currentPath = window.location.pathname;
+    setRoute(Object.values(routes).includes(currentPath) ? currentPath : routes.landing);
+  }
+}, [credentials]);
+
+  useEffect(() => {
+  const handlePopState = () => {
+    if (!credentials) {
       window.history.replaceState({}, '', routes.landing);
       setRoute(routes.landing);
     } else {
-      setRoute(window.location.pathname);
+      const currentPath = window.location.pathname;
+      setRoute(Object.values(routes).includes(currentPath) ? currentPath : routes.landing);
     }
+  };
+  window.addEventListener('popstate', handlePopState);
+  return () => window.removeEventListener('popstate', handlePopState);
+}, [credentials]);
 
-    const handlePopState = () => {
-      const currentPath = getCurrentRoute();
-      setRoute(currentPath);
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
 
   const handleCredentialsSubmit = async (event) => {
     event.preventDefault();
