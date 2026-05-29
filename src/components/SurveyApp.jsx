@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { jsPDF } from 'jspdf';
 import { apiClient } from '../api/client.js';
+import { safeStorage } from '../utils/safeStorage.js';
 
 import { SECTIONS, QUESTIONS, AUTOFILL_RULES, STORAGE_KEY } from '../data/questions.js';
 
@@ -785,7 +786,7 @@ export default function App({ initialScreen = 'welcome', respondent, onFinish })
       const draftData = {
         answers, confirmed, confirmedSnapshot, autofilled, skipped, currentSectionIdx: sectionIdx, savedAt: Date.now()
       };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(draftData));
+      const draftSavedLocally = safeStorage.setItem(STORAGE_KEY, JSON.stringify(draftData));
 
       apiClient.saveSurvey(respondent, answers, confirmed, confirmedSnapshot, skipped, {
         currentSectionIdx: sectionIdx,
@@ -793,7 +794,7 @@ export default function App({ initialScreen = 'welcome', respondent, onFinish })
         totalQuestions: activeQuestionTotal
       }).catch(err => console.error('Backend save failed:', err));
 
-      if (showMsg) showToast('Progress saved', 'success');
+      if (showMsg) showToast(draftSavedLocally ? 'Progress saved' : 'Progress saved for this session', 'success');
     } catch { if (showMsg) showToast('Could not save'); }
   }, [answers, confirmed, confirmedSnapshot, autofilled, skipped, sectionIdx, showToast, respondent, totalAnswered, activeQuestionTotal]);
 
@@ -803,7 +804,7 @@ export default function App({ initialScreen = 'welcome', respondent, onFinish })
   }, [saveDraft]);
 
   useEffect(() => {
-    const d = localStorage.getItem(STORAGE_KEY);
+    const d = safeStorage.getItem(STORAGE_KEY);
     if (d) {
       try {
         const p = JSON.parse(d);
@@ -1046,17 +1047,17 @@ export default function App({ initialScreen = 'welcome', respondent, onFinish })
         <WelcomeScreen
           hasDraft={hasDraft}
           onStart={() => {
-            const d = localStorage.getItem(STORAGE_KEY);
+            const d = safeStorage.getItem(STORAGE_KEY);
             if (d) try { applyDraft(JSON.parse(d)); } catch { /* */ }
             setScreen('survey');
           }}
           onRestore={() => {
-            const d = localStorage.getItem(STORAGE_KEY);
+            const d = safeStorage.getItem(STORAGE_KEY);
             if (d) applyDraft(JSON.parse(d));
             setScreen('survey');
           }}
           onClear={() => {
-            localStorage.removeItem(STORAGE_KEY);
+            safeStorage.removeItem(STORAGE_KEY);
             setHasDraft(false);
             setAnswers({});
             setConfirmed({});

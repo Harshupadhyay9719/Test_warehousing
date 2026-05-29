@@ -13,6 +13,7 @@ import SurveyCredential from './pages/SurveyCredential.jsx';
 import SurveyAdminPage from './pages/SurveyAdminPage.jsx';
 import { apiClient } from './api/client.js';
 import { STORAGE_KEY } from './data/questions.js';
+import { safeStorage } from './utils/safeStorage.js';
 import ReCAPTCHA from 'react-google-recaptcha';
 import './styles/disclaimer.css';
 
@@ -98,7 +99,7 @@ export default function App() {
           throw new Error('Invalid admin password.');
         }
         const { token } = await apiClient.login(username, password);
-        localStorage.setItem('authToken', token);
+        safeStorage.setItem('authToken', token);
         setLoginError('');
         setCredentials({ username });
         navigate(routes.admin);
@@ -129,7 +130,7 @@ export default function App() {
           }
         }
 
-        localStorage.setItem('authToken', token);
+        safeStorage.setItem('authToken', token);
         setLoginError('');
         setCredentials({ username });
 
@@ -152,8 +153,8 @@ export default function App() {
               }
             }
             setShowRoleSelection(true);
-            // Populate localStorage so that when the Survey app starts, it resumes the draft!
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            // Populate browser storage so that when the Survey app starts, it resumes the draft.
+            safeStorage.setItem(STORAGE_KEY, JSON.stringify({
               answers: draft.answers || {},
               confirmed: draft.confirmed || {},
               confirmedSnapshot: draft.confirmedSnapshot || {},
@@ -286,7 +287,7 @@ export default function App() {
   if (route === routes.questions || route === routes.finished) {
     let hasDraft = false;
     try {
-      const draftData = localStorage.getItem(STORAGE_KEY);
+      const draftData = safeStorage.getItem(STORAGE_KEY);
       if (draftData) {
         const draft = JSON.parse(draftData);
         hasDraft = Object.keys(draft.answers || {}).length > 2;

@@ -1,3 +1,5 @@
+import { safeStorage } from '../utils/safeStorage.js';
+
 const API_URL = '/api';
 
 // Helper to safely parse JSON responses
@@ -27,7 +29,7 @@ export const apiClient = {
   },
 
   async saveSurvey(respondent, answers, confirmed, confirmedSnapshot, skipped, progress) {
-    const token = localStorage.getItem('authToken');
+    const token = safeStorage.getItem('authToken');
     const res = await fetch(`${API_URL}/survey/save`, {
       method: 'POST',
       headers: {
@@ -42,7 +44,7 @@ export const apiClient = {
   },
 
   async getDraft() {
-    const token = localStorage.getItem('authToken');
+    const token = safeStorage.getItem('authToken');
     const res = await fetch(`${API_URL}/survey/draft`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
@@ -52,7 +54,7 @@ export const apiClient = {
   },
 
   async submitSurvey(surveyId) {
-    const token = localStorage.getItem('authToken');
+    const token = safeStorage.getItem('authToken');
     const res = await fetch(`${API_URL}/survey/submit`, {
       method: 'POST',
       headers: {
@@ -67,7 +69,7 @@ export const apiClient = {
   },
 
   async saveReferrals(referrals) {
-    const token = localStorage.getItem('authToken');
+    const token = safeStorage.getItem('authToken');
     const res = await fetch(`${API_URL}/survey/referral`, {
       method: 'POST',
       headers: {
