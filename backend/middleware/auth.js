@@ -1,6 +1,11 @@
 import jwt from 'jsonwebtoken';
 import { getJwtSecret } from '../config/jwt.js';
 
+export const isAdminUsername = (username) => {
+  const adminUsername = process.env.ADMIN_USERNAME?.trim();
+  return Boolean(adminUsername && username === adminUsername);
+};
+
 export const verifyToken = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) {
@@ -23,7 +28,7 @@ export const requireAdmin = (req, res, next) => {
     return res.status(500).json({ error: 'Admin username is not configured' });
   }
 
-  if (req.user?.username !== adminUsername) {
+  if (!isAdminUsername(req.user?.username)) {
     return res.status(403).json({ error: 'Admin access required' });
   }
 

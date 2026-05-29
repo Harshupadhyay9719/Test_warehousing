@@ -4,7 +4,7 @@ import User from '../models/User.js';
 import Survey from '../models/Survey.js';
 import { localDb } from '../localDb.js';
 import { getJwtSecret } from '../config/jwt.js';
-import { verifyToken } from '../middleware/auth.js';
+import { isAdminUsername, verifyToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -12,7 +12,7 @@ const router = express.Router();
 // Validates the bearer token and returns the logged-in user's info.
 // The frontend calls this once on page load to silently restore the session.
 router.get('/me', verifyToken, (req, res) => {
-  const isAdmin = req.user.username === 'admin@gmail.com';
+  const isAdmin = isAdminUsername(req.user.username);
   res.json({ username: req.user.username, isAdmin });
 });
 

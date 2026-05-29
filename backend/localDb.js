@@ -2,6 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, 'data');
@@ -45,8 +48,8 @@ async function seedLocalAdmin() {
   }
 
   const users = readJSON(USERS_FILE);
-  const adminExists = users.some(u => u.username === adminUsername);
-  if (!adminExists) {
+  const adminUser = users.find(u => u.username === adminUsername);
+  if (!adminUser) {
     const hashedPassword = await bcrypt.hash(adminPassword, 10);
     users.push({
       _id: 'local-admin-id',
@@ -56,6 +59,14 @@ async function seedLocalAdmin() {
     });
     writeJSON(USERS_FILE, users);
     console.log(`[Offline Mode] Seeded local admin user (username: ${adminUsername})`);
+    return;
+  }
+
+  const passwordMatches = await bcrypt.compare(adminPassword, adminUser.password);
+  if (!passwordMatches) {
+    adminUser.password = await bcrypt.hash(adminPassword, 10);
+    writeJSON(USERS_FILE, users);
+    console.log(`[Offline Mode] Updated local admin password (username: ${adminUsername})`);
   }
 }
 

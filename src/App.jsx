@@ -201,6 +201,11 @@ export default function App() {
       setLoginError('');
       setCredentials({ username });
 
+      if (loginData.isAdmin) {
+        navigate(routes.admin);
+        return;
+      }
+
         // Fetch existing draft from the database to restore state
         try {
           await restoreDraftState();

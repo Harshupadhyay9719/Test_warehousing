@@ -17,7 +17,14 @@ async function seed() {
 
   const existing = await User.findOne({ username: adminUsername });
   if (existing) {
-    console.log(`Admin user already exists (${adminUsername}) - nothing to do.`);
+    const passwordMatches = await existing.comparePassword(adminPassword);
+    if (!passwordMatches) {
+      existing.password = adminPassword;
+      await existing.save();
+      console.log(`Admin user password updated (${adminUsername})`);
+    } else {
+      console.log(`Admin user already exists (${adminUsername}) - nothing to do.`);
+    }
   } else {
     const user = new User({ username: adminUsername, password: adminPassword });
     await user.save();
