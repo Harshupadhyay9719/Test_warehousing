@@ -13,6 +13,7 @@ import SurveyCredential from './pages/SurveyCredential.jsx';
 import SurveyAdminPage from './pages/SurveyAdminPage.jsx';
 import { apiClient } from './api/client.js';
 import { STORAGE_KEY } from './data/questions.js';
+import { safeStorage } from './utils/safeStorage.js';
 import ReCAPTCHA from 'react-google-recaptcha';
 import './styles/disclaimer.css';
 
@@ -176,10 +177,24 @@ export default function App() {
     }
 
     try {
+<<<<<<< HEAD
+      if (username === 'admin@gmail.com') {
+        if (password !== 'survey2026') {
+          throw new Error('Invalid admin password.');
+        }
+        const { token } = await apiClient.login(username, password);
+        safeStorage.setItem('authToken', token);
+        setLoginError('');
+        setCredentials({ username });
+        navigate(routes.admin);
+      } else {
+        let token;
+=======
       let loginData;
       try {
         loginData = await apiClient.login(username, password);
       } catch (loginError) {
+>>>>>>> e606fd1ec9d7a38db0349054de48c79ebf41d1c7
         try {
           const regRes = await fetch('/api/auth/register', {
             method: 'POST',
@@ -196,6 +211,42 @@ export default function App() {
         }
       }
 
+<<<<<<< HEAD
+        safeStorage.setItem('authToken', token);
+        setLoginError('');
+        setCredentials({ username });
+
+        // Fetch existing draft from the database to restore state
+        try {
+          const draft = await apiClient.getDraft();
+          if (draft && Object.keys(draft).length > 0) {
+            if (draft.respondent) {
+              setRespondentDetails({
+                name: draft.respondent.name || '',
+                email: draft.respondent.email || '',
+                organization: draft.respondent.organization || '',
+              });
+              if (draft.respondent.role) {
+                const matchingRole = roles.find(r => r.label === draft.respondent.role || r.code === draft.respondent.roleCode);
+                setRole(matchingRole || {
+                  label: draft.respondent.role,
+                  code: draft.respondent.roleCode || ''
+                });
+              }
+            }
+            setShowRoleSelection(true);
+            // Populate browser storage so that when the Survey app starts, it resumes the draft.
+            safeStorage.setItem(STORAGE_KEY, JSON.stringify({
+              answers: draft.answers || {},
+              confirmed: draft.confirmed || {},
+              confirmedSnapshot: draft.confirmedSnapshot || {},
+              autofilled: draft.autofilled || {},
+              skipped: draft.skipped || {},
+              currentSectionIdx: draft.progress?.currentSectionIdx || 0,
+              savedAt: draft.updatedAt ? new Date(draft.updatedAt).getTime() : Date.now()
+            }));
+          }
+=======
       localStorage.setItem('authToken', loginData.token);
       localStorage.removeItem(STORAGE_KEY);
       setLoginError('');
@@ -209,6 +260,7 @@ export default function App() {
         // Fetch existing draft from the database to restore state
         try {
           await restoreDraftState();
+>>>>>>> e606fd1ec9d7a38db0349054de48c79ebf41d1c7
         } catch (draftError) {
           console.error('Failed to load existing draft:', draftError);
         }
@@ -330,7 +382,7 @@ export default function App() {
   if (route === routes.questions || route === routes.finished) {
     let hasDraft = false;
     try {
-      const draftData = localStorage.getItem(STORAGE_KEY);
+      const draftData = safeStorage.getItem(STORAGE_KEY);
       if (draftData) {
         const draft = JSON.parse(draftData);
         hasDraft = Object.keys(draft.answers || {}).length > 2;

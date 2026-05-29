@@ -1,3 +1,5 @@
+import { safeStorage } from '../utils/safeStorage.js';
+
 const API_URL = '/api';
 
 // Helper to safely parse JSON responses
@@ -51,6 +53,11 @@ export const apiClient = {
     return data; // { token, username, draft, surveys }
   },
 
+<<<<<<< HEAD
+  async saveSurvey(respondent, answers, confirmed, confirmedSnapshot, skipped, progress) {
+    const token = safeStorage.getItem('authToken');
+    const res = await fetch(`${API_URL}/survey/save`, {
+=======
   // ── Session management ──────────────────────────────────────────────────────
 
   /**
@@ -84,6 +91,7 @@ export const apiClient = {
 
   async saveSurvey(respondent, answers, confirmed, confirmedSnapshot, skipped, progress) {
     const res = await authenticatedFetch(`${API_URL}/survey/save`, {
+>>>>>>> e606fd1ec9d7a38db0349054de48c79ebf41d1c7
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ respondent, answers, confirmed, confirmedSnapshot, skipped, progress })
@@ -94,14 +102,26 @@ export const apiClient = {
   },
 
   async getDraft() {
+<<<<<<< HEAD
+    const token = safeStorage.getItem('authToken');
+    const res = await fetch(`${API_URL}/survey/draft`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+=======
     const res = await authenticatedFetch(`${API_URL}/survey/draft`);
+>>>>>>> e606fd1ec9d7a38db0349054de48c79ebf41d1c7
     const data = await parseJSON(res);
     if (!res.ok) throw new Error(data?.error || 'Failed to fetch draft');
     return data;
   },
 
   async submitSurvey(surveyId) {
+<<<<<<< HEAD
+    const token = safeStorage.getItem('authToken');
+    const res = await fetch(`${API_URL}/survey/submit`, {
+=======
     const res = await authenticatedFetch(`${API_URL}/survey/submit`, {
+>>>>>>> e606fd1ec9d7a38db0349054de48c79ebf41d1c7
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ surveyId })
@@ -112,7 +132,12 @@ export const apiClient = {
   },
 
   async saveReferrals(referrals) {
+<<<<<<< HEAD
+    const token = safeStorage.getItem('authToken');
+    const res = await fetch(`${API_URL}/survey/referral`, {
+=======
     const res = await authenticatedFetch(`${API_URL}/survey/referral`, {
+>>>>>>> e606fd1ec9d7a38db0349054de48c79ebf41d1c7
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ referrals })
