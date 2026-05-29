@@ -4,14 +4,28 @@ import User from '../models/User.js';
 import Survey from '../models/Survey.js';
 import { localDb } from '../localDb.js';
 import { getJwtSecret } from '../config/jwt.js';
+import { verifyToken } from '../middleware/auth.js';
 
 const router = express.Router();
+
+// ── GET /api/auth/me ──────────────────────────────────────────────────────────
+// Validates the bearer token and returns the logged-in user's info.
+// The frontend calls this once on page load to silently restore the session.
+router.get('/me', verifyToken, (req, res) => {
+  const isAdmin = req.user.username === 'admin@gmail.com';
+  res.json({ username: req.user.username, isAdmin });
+});
+
 
 router.post('/register', async (req, res) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password required' });
+    }
+
+    if (isAdminUsername(username)) {
+      return res.status(403).json({ error: 'Admin account cannot be registered here' });
     }
 
     const isConnected = req.app.locals.mongoConnected();
@@ -72,7 +86,7 @@ router.post('/login', async (req, res) => {
       } catch (e) {
         console.error('Error fetching offline surveys:', e);
       }
-      return res.json({ token, username, draft, surveys });
+      return res.json({ token, username, isAdmin: isAdminUsername(username), draft, surveys });
     }
 
     const user = await User.findOne({ username });
@@ -101,7 +115,7 @@ router.post('/login', async (req, res) => {
     } catch (e) {
       console.error('Error fetching surveys:', e);
     }
-    return res.json({ token, username, draft, surveys });
+    return res.json({ token, username, isAdmin: isAdminUsername(username), draft, surveys });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: error.message || 'Login failed' });
