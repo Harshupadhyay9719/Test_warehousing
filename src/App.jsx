@@ -164,59 +164,42 @@ export default function App() {
     const username = formData.get('username')?.trim();
     const password = formData.get('password')?.trim();
 
-    // Validate captcha token before proceeding
     if (!captchaToken) {
       setLoginError('Please complete the captcha verification.');
       setIsLoading(false);
       return;
     }
-    if (username !== 'admin@gmail.com' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username)) {
       setLoginError('Please enter a valid email address.');
       setIsLoading(false);
       return;
     }
 
     try {
-      if (username === 'admin@gmail.com') {
-        if (password !== 'survey2026') {
-          throw new Error('Invalid admin password.');
-        }
-        const { token } = await apiClient.login(username, password);
-        localStorage.setItem('authToken', token);
-        setLoginError('');
-        setCredentials({ username });
-        navigate(routes.admin);
-      } else {
-        let token;
+      let loginData;
+      try {
+        loginData = await apiClient.login(username, password);
+      } catch (loginError) {
         try {
-          // Attempt to login first
-          const data = await apiClient.login(username, password);
-          token = data.token;
-        } catch (loginError) {
-          // If login fails (e.g. user does not exist), register them on the fly
-          try {
-            const regRes = await fetch('/api/auth/register', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ username, password })
-            });
-            if (regRes.ok) {
-              // Successfully registered, now login to get token
-              const data = await apiClient.login(username, password);
-              token = data.token;
-            } else {
-              // Registration failed (e.g. username taken but wrong password entered)
-              throw new Error('Invalid credentials or username already taken.');
-            }
-          } catch (regError) {
-            throw new Error(regError.message || 'Invalid username or password.');
+          const regRes = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+          });
+          if (regRes.ok) {
+            loginData = await apiClient.login(username, password);
+          } else {
+            throw new Error('Invalid credentials or username already taken.');
           }
+        } catch (regError) {
+          throw new Error(regError.message || 'Invalid username or password.');
         }
+      }
 
-        localStorage.setItem('authToken', token);
-        localStorage.removeItem(STORAGE_KEY);
-        setLoginError('');
-        setCredentials({ username });
+      localStorage.setItem('authToken', loginData.token);
+      localStorage.removeItem(STORAGE_KEY);
+      setLoginError('');
+      setCredentials({ username });
 
         // Fetch existing draft from the database to restore state
         try {
@@ -225,9 +208,7 @@ export default function App() {
           console.error('Failed to load existing draft:', draftError);
         }
 
-            // After successful credential/login, show the survey start page
-            navigate(routes.main);
-      }
+      navigate(routes.main);
     } catch (error) {
       setLoginError(error.message || 'Invalid username or password.');
     } finally {
