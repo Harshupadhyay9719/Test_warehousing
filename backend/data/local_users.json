@@ -10,5 +10,11 @@
     "username": "dhanalakshmit097@gmail.com",
     "password": "$2a$10$lbxRfWC.Bpxq6Xjdt50YYeYcn5.8hmeaQve/XX9.NMJP2yQmA4wAm",
     "createdAt": "2026-05-29T03:30:09.665Z"
+  },
+  {
+    "_id": "local-admin-id",
+    "username": "admin@example.com",
+    "password": "$2a$10$iLJdq/H0rAxxk2qft4nS9exAcp7MqQiFxP/nmtcQzPn0Tv9OvlJQe",
+    "createdAt": "2026-06-01T06:41:29.115Z"
   }
 ]
