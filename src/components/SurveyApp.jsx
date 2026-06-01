@@ -518,12 +518,10 @@ function RequiredQuestionModal({ data, onClose, onGoToQuestion }) {
 }
 
 /* -- Complete -- */
-function CompleteScreen({ stats, confirmed, confirmedSnapshot, sections, onExport, onRestart, onSubmit }) {
+function CompleteScreen({ stats, sections, onExport, onRestart, onSubmit }) {
   const [referrals, setReferrals] = useState([{ name: '', email: '', organization: '', contactNo: '' }]);
   const [submittingReferrals, setSubmittingReferrals] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
-  const sectionQuestions = sections.flatMap(section => section.qs);
-  const confirmedCount = sectionQuestions.filter(qnum => confirmed[qnum]).length;
 
   const validateEmail = (email) => {
     if (!email) return true; // Optional field
@@ -606,33 +604,14 @@ function CompleteScreen({ stats, confirmed, confirmedSnapshot, sections, onExpor
           <div className="complete-stat"><div className="n">{stats.confirmed}</div><div>Confirmed</div></div>
           <div className="complete-stat"><div className="n">{sections.length}</div><div>Sections</div></div>
         </div>
-        {confirmedCount > 0 ? (
-          <div className="complete-summary">
-            <h2 className="complete-summary-title">Your confirmed responses</h2>
-            <p className="complete-summary-note">Below is what you confirmed during the survey (including skipped questions).</p>
-            {sections.map(s => {
-              const items = s.qs.filter(q => confirmed[q]);
-              if (!items.length) return null;
-              return (
-                <div key={s.num} className="complete-summary-section">
-                  <h3 className="complete-summary-section-title">Section {s.num}: {s.title}</h3>
-                  {items.map(qnum => {
-                    const q = QUESTIONS[qnum];
-                    return (
-                      <div key={qnum} className="complete-summary-item">
-                        <div className="complete-q-num">Q{qnum}</div>
-                        <div className="complete-q-label">{q ? q.label : ''}</div>
-                        <div className="complete-q-answer">{confirmedSnapshot[qnum] || SKIP_LABEL}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="complete-summary-empty">No confirmed answers to show. Confirmed responses appear here when you use <strong>Confirm answer</strong> during the survey.</p>
-        )}
+        <div className="complete-illustration-wrap">
+          <img
+            className="complete-illustration"
+            src="/assets/thank-you-survey.jpg"
+            alt="Survey submission completed"
+            loading="eager"
+          />
+        </div>
 
         <div className="referral-section">
           <h2>Help us reach more people</h2>
@@ -1086,8 +1065,6 @@ export default function App({ initialScreen = 'welcome', respondent, onFinish })
             answered: totalAnswered,
             confirmed: activeQuestionNums.filter(qnum => confirmed[qnum]).length
           }}
-          confirmed={confirmed}
-          confirmedSnapshot={confirmedSnapshot}
           sections={activeSections}
           onExport={() => {
             const confirmedCount = activeQuestionNums.filter(qnum => confirmed[qnum]).length;

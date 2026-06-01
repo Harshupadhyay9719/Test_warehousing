@@ -814,6 +814,21 @@ textarea.open-q:focus {
 .complete-stat:nth-child(3) { background: var(--purple-bg); }
 .complete-stat:nth-child(3) .n { color: var(--purple); }
 .complete-stat .n { font-size: 1.75rem; font-weight: 600; }
+.complete-illustration-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0 1.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, #fff, var(--bg-soft));
+}
+.complete-illustration {
+  width: min(100%, 520px);
+  height: auto;
+  display: block;
+  border-radius: var(--radius-md);
+}
 
 .complete-screen-overlay { align-items: flex-start; padding: 1.5rem 1rem 2rem; overflow-y: auto; }
 .complete-card-wide {
